@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mind HQ</title>
+    <style>
+        :root {
+            --bg-deep: #0f172a;
+            --bg-card: #1e293b;
+            --accent-cyan: #22d3ee;
+            --accent-purple: #a855f7;
+            --accent-green: #10b981;
+            --accent-red: #f43f5e;
+            --text-main: #f8fafc;
+            --text-dim: #94a3b8;
+            --glow-cyan: 0 0 15px rgba(34, 211, 238, 0.6);
+            --glow-purple: 0 0 15px rgba(168, 85, 247, 0.6);
+            --glow-green: 0 0 15px rgba(16, 185, 129, 0.6);
+            --glow-red: 0 0 15px rgba(244, 63, 94, 0.6);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            background-color: var(--bg-deep);
+            color: var(--text-main);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Layout */
+        #main-stage {
+            flex: 1;
+            position: relative;
+            overflow-y: auto;
+            padding: 20px;
+            padding-bottom: 90px;
+        }
+
+        .screen { display: none; animation: fadeIn 0.4s ease; }
+        .screen.active { display: block; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            height: 75px;
+            background: rgba(15, 23, 42, 0.9);
+            backdrop-filter: blur(12px);
+            border-top: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .nav-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: var(--text-dim);
+            font-size: 10px;
+            text-decoration: none;
+            gap: 4px;
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+
+        .nav-btn.active { color: var(--accent-cyan); }
+        .nav-btn svg { width: 24px; height: 24px; }
+
+        /* Visualization Area */
+        .hq-container {
+            width: 100%;
+            height: 80vh;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .body-svg {
+            height: 100%;
+            filter: drop-shadow(0 0 10px rgba(255,255,255,0.05));
+        }
+
+        /* Interactive Nodes */
+        .node {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 10;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border: 2px solid rgba(255,255,255,0.3);
+        }
+
+        /* Brain Expansion System */
+        #head-trigger {
+            position: absolute;
+            top: 5%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 70px;
+            background: transparent;
+            z-index: 20;
+            cursor: pointer;
+        }
+
+        .brain-node {
+            opacity: 0;
+            pointer-events: none;
+            transform: translate(-50%, -50%) scale(0);
+            left: 50%;
+            top: 10%;
+        }
+
+        .expanded .brain-node {
+            opacity: 1;
+            pointer-events: auto;
+            transform: scale(1.2);
+        }
+
+        /* Precise Node Positioning */
+        #node-entry { top: 7%; left: 58%; background: var(--accent-cyan); box-shadow: var(--glow-cyan); } /* Back */
+        #node-reception { top: 9%; left: 50%; background: var(--accent-purple); box-shadow: var(--glow-purple); } /* Center */
+        #node-management { top: 7%; left: 42%; background: var(--accent-green); box-shadow: var(--glow-green); } /* Front */
+        #node-workers { top: 3%; left: 50%; background: var(--accent-red); box-shadow: var(--glow-red); } /* Top */
+
+        .expanded #node-entry { transform: translate(35px, -10px) scale(1.2); }
+        .expanded #node-management { transform: translate(-55px, -10px) scale(1.2); }
+        .expanded #node-workers { transform: translate(-10px, -45px) scale(1.2); }
+        .expanded #node-reception { transform: translate(-10px, -5px) scale(1.5); }
+
+        /* Body Sensors */
+        #sensor-shoulder-l { top: 22%; left: 35%; background: var(--accent-cyan); box-shadow: var(--glow-cyan); }
+        #sensor-shoulder-r { top: 22%; left: 65%; background: var(--accent-cyan); box-shadow: var(--glow-cyan); }
+        #sensor-heart { top: 33%; left: 50%; background: var(--accent-red); box-shadow: var(--glow-red); animation: pulse 1.5s infinite; }
+        #sensor-stomach { top: 48%; left: 50%; background: var(--accent-purple); box-shadow: var(--glow-purple); }
+
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
+
+        /* Modals & Forms */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.85);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            z-index: 2000;
+        }
+
+        .modal {
+            background: var(--bg-card);
+            width: 100%;
+            max-width: 450px;
+            border-radius: 24px;
+            padding: 24px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        label { display: block; color: var(--accent-cyan); font-size: 12px; font-weight: bold; margin-bottom: 8px; text-transform: uppercase; }
+        textarea, input {
+            width: 100%;
+            background: var(--bg-deep);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: white;
+            padding: 12px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            font-size: 16px;
+        }
+
+        .btn {
+            padding: 14px;
+            border-radius: 12px;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+        }
+        .btn-primary { background: var(--accent-cyan); color: #000; }
+        .btn-ghost { background: transparent; color: var(--text-dim); }
+
+        /* Audit Styling */
+        .audit-item {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 12px;
+            border-left: 4px solid var(--accent-cyan);
+        }
+        .audit-time { font-size: 11px; color: var(--accent-cyan); margin-bottom: 5px; }
+        .audit-node { font-size: 10px; text-transform: uppercase; background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 4px; }
+
+        /* Triage Popup */
+        #triage-alert {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            background: var(--accent-purple);
+            color: white;
+            padding: 20px;
+            border-radius: 16px;
+            z-index: 3000;
+            display: none;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="triage-alert">
+        <h3 style="margin-bottom: 8px;">Archival Triage</h3>
+        <p id="alert-text"></p>
+        <button class="btn" style="background:white; color:#000; margin-top:15px;" onclick="closeAlert()">Understood</button>
+    </div>
+
+    <div id="main-stage">
+        <!-- MIND HQ -->
+        <section id="screen-hq" class="screen active">
+            <h1 style="font-size: 24px;">Mind HQ</h1>
+            <p style="color: var(--text-dim);">Click head to expand Brain Nodes</p>
+
+            <div class="hq-container" id="hq-visual-group">
+                <div id="head-trigger" onclick="toggleBrain()"></div>
+                
+                <!-- Brain Nodes -->
+                <div id="node-workers" class="node brain-node" onclick="openNode('Workers (Unhelpful Behavior)')"></div>
+                <div id="node-entry" class="node brain-node" onclick="openNode('Entry (External Trigger)')"></div>
+                <div id="node-reception" class="node brain-node" onclick="openNode('Reception (Core Belief)')"></div>
+                <div id="node-management" class="node brain-node" onclick="openNode('Management (Rules/Assumptions)')"></div>
+
+                <!-- Body Sensors -->
+                <div id="sensor-shoulder-l" class="node" onclick="openNode('Left Shoulder')"></div>
+                <div id="sensor-shoulder-r" class="node" onclick="openNode('Right Shoulder')"></div>
+                <div id="sensor-heart" class="node" onclick="openNode('Heart (Emotional Center)')"></div>
+                <div id="sensor-stomach" class="node" onclick="openNode('Stomach (Gut Feeling)')"></div>
+
+                <!-- Human Body SVG -->
+                <svg class="body-svg" viewBox="0 0 200 500" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Head -->
+                    <path d="M100,30 C75,30 65,55 65,80 C65,105 85,120 100,120 C115,120 135,105 135,80 C135,55 125,30 100,30 Z" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="2"/>
+                    <!-- Neck -->
+                    <path d="M90,120 L90,135 L110,135 L110,120" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="2"/>
+                    <!-- Shoulders and Arms -->
+                    <path d="M90,135 L50,150 L35,280 M110,135 L150,150 L165,280" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="2"/>
+                    <!-- Torso -->
+                    <path d="M50,150 L60,350 L140,350 L150,150" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="2"/>
+                    <!-- Legs -->
+                    <path d="M65,350 L55,480 M135,350 L145,480" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="2"/>
+                </svg>
+            </div>
+        </section>
+
+        <!-- THE ARCHIVE -->
+        <section id="screen-archive" class="screen">
+            <h1>The Archive</h1>
+            <p style="margin-bottom:20px;">Permanent Context Storage</p>
+            <label>Historical Context</label>
+            <textarea id="arc-context" placeholder="Key upbringing and past event data..."></textarea>
+            <label>Personality Traits</label>
+            <textarea id="arc-traits" placeholder="Core defining characteristics..."></textarea>
+            <label>Known Triggers</label>
+            <textarea id="arc-triggers" placeholder="Common system stress points..."></textarea>
+            <button class="btn btn-primary" onclick="saveArchive()">Save To Archive</button>
+        </section>
+
+        <!-- WEEKLY AUDIT -->
+        <section id="screen-audit" class="screen">
+            <h1>Weekly Audit</h1>
+            <p style="margin-bottom:20px;">Review mental triage patterns</p>
+            <div id="audit-list"></div>
+            <button class="btn btn-ghost" onclick="clearAudit()" style="margin-top:20px; border: 1px solid var(--accent-red); color: var(--accent-red);">Clear History</button>
+        </section>
+    </div>
+
+    <!-- MODAL -->
+    <div id="node-modal" class="modal-overlay">
+        <div class="modal">
+            <h2 id="modal-title" style="margin-bottom:15px;">Node Title</h2>
+            <label>Date & Time</label>
+            <input type="datetime-local" id="log-date">
+            <label>Observation</label>
+            <textarea id="log-text" placeholder="What is happening in this area?" style="height:100px;"></textarea>
+            <div style="display:flex; gap:10px;">
+                <button class="btn btn-primary" onclick="saveLog()">Save to Audit</button>
+                <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <nav>
+        <button class="nav-btn active" onclick="showScreen('hq', this)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+            <span>Mind HQ</span>
+        </button>
+        <button class="nav-btn" onclick="showScreen('archive', this)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            <span>The Archive</span>
+        </button>
+        <button class="nav-btn" onclick="showScreen('audit', this)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <span>Audit</span>
+        </button>
+    </nav>
+
+    <script>
+        let currentActiveNode = "";
+        let auditLogs = JSON.parse(localStorage.getItem('mindhq_logs')) || [];
+        let archive = JSON.parse(localStorage.getItem('mindhq_archive')) || { context: '', traits: '', triggers: '' };
+
+        // Toggle Brain Expansion
+        function toggleBrain() {
+            document.getElementById('hq-visual-group').classList.toggle('expanded');
+        }
+
+        // Screen Navigation
+        function showScreen(id, btn) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById('screen-' + id).classList.add('active');
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            if(id === 'audit') renderAudit();
+            if(id === 'archive') loadArchive();
+        }
+
+        // Modal Logic
+        function openNode(name) {
+            currentActiveNode = name;
+            document.getElementById('modal-title').innerText = name;
+            
+            // Set default datetime to now
+            const now = new Date();
+            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+            document.getElementById('log-date').value = now.toISOString().slice(0, 16);
+            
+            document.getElementById('log-text').value = "";
+            document.getElementById('node-modal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('node-modal').style.display = 'none';
+        }
+
+        // Data Management
+        function saveLog() {
+            const text = document.getElementById('log-text').value;
+            const date = document.getElementById('log-date').value;
+            if(!text) return alert("Please enter an observation");
+
+            const newEntry = {
+                id: Date.now(),
+                node: currentActiveNode,
+                content: text,
+                time: date
+            };
+
+            auditLogs.unshift(newEntry);
+            localStorage.setItem('mindhq_logs', JSON.stringify(auditLogs));
+
+            if (currentActiveNode.includes("Reception")) {
+                showTriageAlert("John, checking The Archive... Is this a Fact or an Opinion? Do not send this to Management yet.");
+            }
+
+            closeModal();
+            renderAudit();
+        }
+
+        function showTriageAlert(msg) {
+            document.getElementById('alert-text').innerText = msg;
+            document.getElementById('triage-alert').style.display = 'block';
+        }
+
+        function closeAlert() {
+            document.getElementById('triage-alert').style.display = 'none';
+        }
+
+        function renderAudit() {
+            const list = document.getElementById('audit-list');
+            if(auditLogs.length === 0) {
+                list.innerHTML = `<p style="text-align:center; padding:40px; color:var(--text-dim);">No triage history found.</p>`;
+                return;
+            }
+
+            // Sort by date descending
+            const sorted = [...auditLogs].sort((a,b) => new Date(b.time) - new Date(a.time));
+
+            list.innerHTML = sorted.map(log => `
+                <div class="audit-item">
+                    <div class="audit-time">${new Date(log.time).toLocaleString()}</div>
+                    <div style="margin-bottom:8px;"><span class="audit-node">${log.node}</span></div>
+                    <div style="font-size:15px; line-height:1.4;">${log.content}</div>
+                </div>
+            `).join('');
+        }
+
+        function clearAudit() {
+            if(confirm("Permanently delete all audit history?")) {
+                auditLogs = [];
+                localStorage.setItem('mindhq_logs', JSON.stringify(auditLogs));
+                renderAudit();
+            }
+        }
+
+        // Archive Management
+        function loadArchive() {
+            document.getElementById('arc-context').value = archive.context || "";
+            document.getElementById('arc-traits').value = archive.traits || "";
+            document.getElementById('arc-triggers').value = archive.triggers || "";
+        }
+
+        function saveArchive() {
+            archive.context = document.getElementById('arc-context').value;
+            archive.traits = document.getElementById('arc-traits').value;
+            archive.triggers = document.getElementById('arc-triggers').value;
+            localStorage.setItem('mindhq_archive', JSON.stringify(archive));
+            alert("The Archive updated successfully.");
+        }
+
+        // Init
+        window.onload = () => {
+            loadArchive();
+        };
+    </script>
+</body>
+</html>
