@@ -16,6 +16,8 @@
             --red: #f43f5e;
             --text: #f1f5f9;
             --text-dim: #64748b;
+            --glass: rgba(255, 255, 255, 0.03);
+            --border: rgba(255, 255, 255, 0.1);
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -30,11 +32,424 @@
             flex-direction: column;
         }
 
-        h1 { font-family: 'Orbitron', sans-serif; font-size: 1.2rem; color: var(--cyan); letter-spacing: 2px; }
+        h1 { font-family: 'Orbitron', sans-serif; font-size: 1.1rem; color: var(--cyan); letter-spacing: 2px; padding: 20px; }
 
         /* Navigation */
         nav {
             position: fixed;
+            bottom: 0;
+            width: 100%;
+            height: 75px;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(15px);
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            color: var(--text-dim);
+            font-size: 10px;
+            cursor: pointer;
+            transition: 0.3s;
+            background: none;
+            border: none;
+        }
+
+        .nav-item.active { color: var(--cyan); text-shadow: 0 0 10px var(--cyan); }
+        .nav-item svg { width: 22px; height: 22px; }
+
+        /* Main Viewport */
+        main { flex: 1; position: relative; overflow-y: auto; padding-bottom: 90px; }
+        .screen { display: none; padding: 20px; animation: fadeIn 0.4s ease-out; }
+        .screen.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
+
+        /* Interactive Interface */
+        .hq-stage {
+            position: relative;
+            width: 100%;
+            height: 70vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        /* The Brain Overlay - Modern Pop-up */
+        #brain-overlay {
+            position: absolute;
+            top: 10%;
+            width: 90%;
+            max-width: 350px;
+            background: rgba(15, 23, 42, 0.98);
+            border: 1px solid var(--cyan);
+            border-radius: 24px;
+            padding: 20px;
+            z-index: 500;
+            opacity: 0;
+            transform: translateY(-20px) scale(0.9);
+            pointer-events: none;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8), 0 0 20px rgba(34, 211, 238, 0.2);
+        }
+
+        #brain-overlay.active {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            pointer-events: auto;
+        }
+
+        /* Body Silhouette and Sensors */
+        .body-canvas { height: 100%; width: auto; }
+        
+        .node {
+            cursor: pointer;
+            filter: drop-shadow(0 0 8px currentColor);
+            transition: 0.3s;
+        }
+        .node:active { transform: scale(1.4); }
+
+        .pulse { animation: nodePulse 2s infinite; }
+        @keyframes nodePulse {
+            0% { filter: drop-shadow(0 0 2px currentColor); opacity: 0.8; }
+            50% { filter: drop-shadow(0 0 12px currentColor); opacity: 1; }
+            100% { filter: drop-shadow(0 0 2px currentColor); opacity: 0.8; }
+        }
+
+        /* Modal / Form Styling */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            z-index: 2000;
+        }
+
+        .modal {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 25px;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .modal h3 { font-family: 'Orbitron', sans-serif; color: var(--cyan); margin-bottom: 20px; font-size: 1rem; }
+        
+        label { display: block; font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+        textarea, input {
+            width: 100%;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--border);
+            color: #fff;
+            padding: 14px;
+            border-radius: 12px;
+            font-size: 15px;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 16px;
+            border-radius: 12px;
+            border: none;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .btn-cyan { background: var(--cyan); color: #020617; }
+        .btn-ghost { background: transparent; color: var(--text-dim); margin-top: 10px; }
+
+        /* Triage Alert Box */
+        #triage-alert {
+            position: fixed;
+            top: 20px; left: 20px; right: 20px;
+            background: var(--purple);
+            color: white;
+            padding: 20px;
+            border-radius: 16px;
+            display: none;
+            z-index: 3000;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+            animation: slideDown 0.4s ease-out;
+        }
+        @keyframes slideDown { from { transform: translateY(-100%); } to { transform: translateY(0); } }
+
+        /* Audit Styles */
+        .audit-card {
+            background: var(--glass);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 12px;
+        }
+        .audit-header { display: flex; justify-content: space-between; font-size: 10px; font-weight: bold; margin-bottom: 8px; }
+    </style>
+</head>
+<body>
+
+    <div id="triage-alert">
+        <h2 style="font-family: 'Orbitron'; font-size: 14px; margin-bottom: 10px;">Archival Triage</h2>
+        <p id="alert-msg"></p>
+        <button class="btn" style="background:white; color:black; margin-top:15px; padding:10px" onclick="closeAlert()">Acknowledge</button>
+    </div>
+
+    <main>
+        <!-- MIND HQ SCREEN -->
+        <section id="screen-hq" class="screen active">
+            <h1>Mind HQ</h1>
+            
+            <div class="hq-stage">
+                <!-- BRAIN POPUP -->
+                <div id="brain-overlay">
+                    <h2 style="font-family: 'Orbitron'; font-size: 12px; color: var(--cyan); margin-bottom: 15px; text-align: center;">Neural Mapping</h2>
+                    <svg viewBox="0 0 220 180" width="100%">
+                        <!-- Entry Point (Ear/External) -->
+                        <circle cx="190" cy="110" r="10" fill="var(--cyan)" class="node pulse" onclick="openModal('Entry (The External Trigger)')" />
+                        <line x1="180" y1="110" x2="160" y2="100" stroke="var(--cyan)" stroke-dasharray="2" />
+                        <text x="190" y="135" fill="var(--cyan)" font-size="9" text-anchor="middle" font-family="Orbitron">ENTRY</text>
+
+                        <!-- Brain Anatomical Shapes -->
+                        <!-- Frontal Lobe (Management) -->
+                        <path d="M40,60 C40,30 80,20 110,40 L110,100 L50,110 Z" fill="rgba(16, 185, 129, 0.15)" stroke="var(--green)" stroke-width="1" />
+                        <!-- Parietal/Mid (Reception) -->
+                        <path d="M110,40 C140,20 170,40 170,80 L170,120 L110,120 Z" fill="rgba(168, 85, 247, 0.15)" stroke="var(--purple)" stroke-width="1" />
+                        <!-- Cerebellum/Stem (Workers) -->
+                        <path d="M100,120 C100,140 130,150 150,140 L160,110 L110,110 Z" fill="rgba(244, 63, 94, 0.15)" stroke="var(--red)" stroke-width="1" />
+
+                        <!-- Brain Section Nodes -->
+                        <!-- Management (Frontal) -->
+                        <circle cx="75" cy="70" r="10" fill="var(--green)" class="node" onclick="openModal('Management (Rules/Assumptions)')" />
+                        <text x="75" y="55" fill="var(--green)" font-size="8" text-anchor="middle" font-family="Orbitron">MGMT</text>
+
+                        <!-- Reception (Mid) -->
+                        <circle cx="135" cy="80" r="10" fill="var(--purple)" class="node" onclick="openModal('Reception (Core Belief)')" />
+                        <text x="135" y="65" fill="var(--purple)" font-size="8" text-anchor="middle" font-family="Orbitron">RECEPTION</text>
+
+                        <!-- Workers (Stem) -->
+                        <circle cx="125" cy="130" r="10" fill="var(--red)" class="node" onclick="openModal('Workers (The Unhelpful Behavior)')" />
+                        <text x="125" y="155" fill="var(--red)" font-size="8" text-anchor="middle" font-family="Orbitron">WORKERS</text>
+                    </svg>
+                    <button class="btn btn-ghost" style="font-size: 10px;" onclick="toggleBrain()">Return to Body View</button>
+                </div>
+
+                <!-- BODY SILHOUETTE -->
+                <svg class="body-canvas" viewBox="0 0 200 500">
+                    <!-- Anatomical Outline -->
+                    <path d="M100,40 C80,40 70,55 70,80 C70,105 85,120 100,120 C115,120 130,105 130,80 C130,55 120,40 100,40 M100,120 L100,140 M70,145 L130,145 M100,140 L60,160 L45,300 M100,140 L140,160 L155,300 M75,350 L70,480 M125,350 L130,480 M65,350 L135,350 L140,160 L60,160 Z" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="1.5" />
+                    
+                    <!-- Clickable Head Area -->
+                    <circle cx="100" cy="80" r="25" fill="rgba(34, 211, 238, 0.05)" style="cursor:pointer;" onclick="toggleBrain()" />
+                    <circle cx="100" cy="75" r="4" fill="var(--cyan)" class="pulse" />
+
+                    <!-- BODY NODES: Heart, Gut, Hands, Legs -->
+                    <!-- Heart -->
+                    <circle cx="100" cy="190" r="8" fill="var(--red)" class="node pulse" onclick="openModal('Body: Heart (Emotions)')" />
+                    <!-- Gut -->
+                    <circle cx="100" cy="280" r="8" fill="var(--purple)" class="node pulse" onclick="openModal('Body: Stomach (Gut Sensor)')" />
+                    <!-- Hands -->
+                    <circle cx="45" cy="300" r="7" fill="var(--cyan)" class="node pulse" onclick="openModal('Body: Hands (Actions)')" />
+                    <circle cx="155" cy="300" r="7" fill="var(--cyan)" class="node pulse" onclick="openModal('Body: Hands (Actions)')" />
+                    <!-- Legs -->
+                    <circle cx="75" cy="450" r="7" fill="var(--green)" class="node pulse" onclick="openModal('Body: Legs (Flight/Freeze)')" />
+                    <circle cx="125" cy="450" r="7" fill="var(--green)" class="node pulse" onclick="openModal('Body: Legs (Flight/Freeze)')" />
+                </svg>
+            </div>
+        </section>
+
+        <!-- THE ARCHIVE SCREEN -->
+        <section id="screen-archive" class="screen">
+            <h1>The Archive</h1>
+            <label>Historical Context & Trauma</label>
+            <textarea id="arc-context" rows="4" placeholder="Significant past events..."></textarea>
+            
+            <label>Personality Traits</label>
+            <textarea id="arc-traits" rows="4" placeholder="Core identity factors..."></textarea>
+            
+            <label>Neural Triggers</label>
+            <textarea id="arc-triggers" rows="4" placeholder="Words, tones, or situations..."></textarea>
+            
+            <button class="btn btn-cyan" onclick="saveArchive()">Save To Archive</button>
+        </section>
+
+        <!-- WEEKLY AUDIT SCREEN -->
+        <section id="screen-audit" class="screen">
+            <h1>Weekly Audit</h1>
+            <div id="audit-list"></div>
+            <button class="btn btn-ghost" style="color:var(--red); border:1px solid var(--red);" onclick="clearAudit()">Clear Audit History</button>
+        </section>
+    </main>
+
+    <!-- INPUT MODAL -->
+    <div id="input-modal" class="modal-overlay">
+        <div class="modal">
+            <h3 id="modal-node-title">Node Observation</h3>
+            <label>Occurrence Date & Time</label>
+            <input type="datetime-local" id="log-date">
+            <label>Neural Feedback / Observation</label>
+            <textarea id="log-text" rows="5" placeholder="Describe what is happening in this area..."></textarea>
+            
+            <button class="btn btn-cyan" onclick="saveEntry()">Sync to Audit</button>
+            <button class="btn btn-ghost" onclick="closeModal()">Dismiss</button>
+        </div>
+    </div>
+
+    <!-- BOTTOM NAV -->
+    <nav>
+        <button class="nav-item active" onclick="showScreen('hq', this)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+            <span>Mind HQ</span>
+        </button>
+        <button class="nav-item" onclick="showScreen('archive', this)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M4 4.5A2.5 2.5 0 0 1 6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15z"/></svg>
+            <span>Archive</span>
+        </button>
+        <button class="nav-item" onclick="showScreen('audit', this)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <span>Weekly Audit</span>
+        </button>
+    </nav>
+
+    <script>
+        let selectedNode = "";
+        let logs = JSON.parse(localStorage.getItem('mindhq_logs')) || [];
+
+        // Navigation
+        function showScreen(screenId, btn) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById('screen-' + screenId).classList.add('active');
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            btn.classList.add('active');
+            if(screenId === 'audit') renderAudit();
+        }
+
+        // Brain Interaction
+        function toggleBrain() {
+            document.getElementById('brain-overlay').classList.toggle('active');
+        }
+
+        // Modal Handling
+        function openModal(nodeName) {
+            selectedNode = nodeName;
+            document.getElementById('modal-node-title').innerText = nodeName;
+            document.getElementById('log-text').value = "";
+            
+            // Default time to now
+            const now = new Date();
+            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+            document.getElementById('log-date').value = now.toISOString().slice(0, 16);
+            
+            document.getElementById('input-modal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('input-modal').style.display = 'none';
+        }
+
+        // Data Storage
+        function saveEntry() {
+            const note = document.getElementById('log-text').value.trim();
+            const time = document.getElementById('log-date').value;
+            if(!note) return;
+
+            const entry = {
+                id: Date.now(),
+                node: selectedNode,
+                text: note,
+                timestamp: time
+            };
+
+            logs.unshift(entry);
+            localStorage.setItem('mindhq_logs', JSON.stringify(logs));
+
+            // Logic Trigger
+            if(selectedNode.includes("Reception")) {
+                showAlert("John, checking The Archive... Is this a Fact or an Opinion? Do not send this to Management yet.");
+            }
+
+            closeModal();
+            renderAudit();
+        }
+
+        function showAlert(msg) {
+            document.getElementById('alert-msg').innerText = msg;
+            document.getElementById('triage-alert').style.display = 'block';
+        }
+
+        function closeAlert() {
+            document.getElementById('triage-alert').style.display = 'none';
+        }
+
+        // Archive Logic
+        function saveArchive() {
+            const archive = {
+                context: document.getElementById('arc-context').value,
+                traits: document.getElementById('arc-traits').value,
+                triggers: document.getElementById('arc-triggers').value
+            };
+            localStorage.setItem('mindhq_archive', JSON.stringify(archive));
+            alert("Mind HQ Archive Updated.");
+        }
+
+        function loadArchive() {
+            const data = JSON.parse(localStorage.getItem('mindhq_archive'));
+            if(data) {
+                document.getElementById('arc-context').value = data.context || "";
+                document.getElementById('arc-traits').value = data.traits || "";
+                document.getElementById('arc-triggers').value = data.triggers || "";
+            }
+        }
+
+        // Audit Rendering
+        function renderAudit() {
+            const container = document.getElementById('audit-list');
+            if(logs.length === 0) {
+                container.innerHTML = `<div style="text-align:center; color:var(--text-dim); padding:40px;">No historical data available.</div>`;
+                return;
+            }
+
+            container.innerHTML = logs.map(log => {
+                let color = 'var(--cyan)';
+                if(log.node.includes('Reception')) color = 'var(--purple)';
+                if(log.node.includes('Workers')) color = 'var(--red)';
+                if(log.node.includes('Management')) color = 'var(--green)';
+
+                return `
+                    <div class="audit-card" style="border-left: 4px solid ${color}">
+                        <div class="audit-header">
+                            <span style="color:${color}">${log.node}</span>
+                            <span>${new Date(log.timestamp).toLocaleString()}</span>
+                        </div>
+                        <div style="font-size:14px; line-height:1.5">${log.text}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function clearAudit() {
+            if(confirm("Confirm: Delete all mental triage history?")) {
+                logs = [];
+                localStorage.setItem('mindhq_logs', JSON.stringify(logs));
+                renderAudit();
+            }
+        }
+
+        // Init
+        window.onload = loadArchive;
+    </script>
+</body>
+</html>            position: fixed;
             bottom: 0;
             width: 100%;
             height: 75px;
