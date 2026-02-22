@@ -3,227 +3,445 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mind HQ - Antimatter</title>
+    <title>Mind HQ | Neural Interface</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;400;600&display=swap');
+
         :root {
-            --bg: #020617;
-            --vessel: #22d3ee;
-            --entry: #00ffff;
-            --reception: #d8b4fe;
-            --mgmt: #4ade80;
-            --workers: #f87171;
-            --text: #f8fafc;
+            --bg-dark: #020617;
+            --bg-card: #0f172a;
+            --cyan: #22d3ee;
+            --purple: #a855f7;
+            --green: #10b981;
+            --red: #f43f5e;
+            --text: #f1f5f9;
+            --text-dim: #64748b;
         }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
         body {
-            background-color: var(--bg);
+            background-color: var(--bg-dark);
             color: var(--text);
-            font-family: 'Segoe UI', sans-serif;
-            margin: 0;
+            font-family: 'Inter', sans-serif;
             height: 100vh;
+            overflow: hidden;
             display: flex;
             flex-direction: column;
-            overflow: hidden;
         }
 
-        /* The Vessel Container */
-        #stage {
-            flex: 1;
+        h1 { font-family: 'Orbitron', sans-serif; font-size: 1.2rem; color: var(--cyan); letter-spacing: 2px; }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            height: 75px;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            color: var(--text-dim);
+            font-size: 10px;
+            cursor: pointer;
+            transition: 0.3s;
+            background: none;
+            border: none;
+        }
+
+        .nav-item.active { color: var(--cyan); }
+        .nav-item svg { width: 22px; height: 22px; }
+
+        /* Main Viewport */
+        main { flex: 1; position: relative; overflow-y: auto; padding: 20px; padding-bottom: 90px; }
+        .screen { display: none; animation: fadeIn 0.4s ease-out; }
+        .screen.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* Interface Layout */
+        .interface-container {
             position: relative;
+            width: 100%;
+            height: 70vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            perspective: 1000px;
+            background: radial-gradient(circle, rgba(34, 211, 238, 0.05) 0%, transparent 70%);
         }
 
-        svg#vessel {
-            width: 90%;
-            height: 90%;
-            filter: drop-shadow(0 0 15px rgba(34, 211, 238, 0.4));
+        /* The Brain Pop-out */
+        #brain-map {
+            position: absolute;
+            top: 20px;
+            right: 10px;
+            width: 200px;
+            height: 200px;
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid var(--cyan);
+            border-radius: 20px;
+            opacity: 0;
+            transform: scale(0.8) translateX(20px);
+            pointer-events: none;
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 100;
+            box-shadow: 0 0 30px rgba(0,0,0,0.5);
+            padding: 10px;
         }
 
-        .outline { stroke: var(--vessel); stroke-width: 1.5; fill: none; opacity: 0.6; }
-        .neural-path { stroke: var(--vessel); stroke-width: 0.5; opacity: 0.2; stroke-dasharray: 4; }
-
-        /* Nodes & Brain Logic */
-        .brain-ui { transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); transform-origin: 100px 60px; }
-        .expanded .brain-ui { transform: translate(50px, -20px) scale(1.3); }
-
-        .node { cursor: pointer; filter: drop-shadow(0 0 8px currentColor); }
-        .node circle { transition: r 0.3s ease; }
-        .node:hover circle { r: 12; }
-
-        /* Worker Hotspots */
-        .hotspot { fill: rgba(248, 113, 113, 0.2); stroke: var(--workers); stroke-width: 1; cursor: pointer; }
-        .hotspot.active { animation: pulse 1.5s infinite; fill: rgba(248, 113, 113, 0.6); }
-
-        @keyframes pulse {
-            0% { r: 5; opacity: 1; }
-            100% { r: 15; opacity: 0; }
+        #brain-map.active {
+            opacity: 1;
+            transform: scale(1) translateX(0);
+            pointer-events: auto;
         }
 
-        /* UI Overlays */
+        /* SVG Components */
+        .body-silhouette {
+            height: 100%;
+            max-width: 100%;
+        }
+
+        .clickable-node {
+            cursor: pointer;
+            filter: drop-shadow(0 0 5px currentColor);
+            transition: transform 0.2s;
+        }
+
+        .clickable-node:hover { transform: scale(1.2); }
+
+        /* Specific node colors */
+        .cyan { color: var(--cyan); fill: var(--cyan); }
+        .purple { color: var(--purple); fill: var(--purple); }
+        .green { color: var(--green); fill: var(--green); }
+        .red { color: var(--red); fill: var(--red); }
+
+        /* Labels */
+        .node-label {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 8px;
+            fill: white;
+            pointer-events: none;
+            text-transform: uppercase;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            z-index: 2000;
+        }
+
         .modal {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.85);
-            display: none; align-items: center; justify-content: center; z-index: 100;
+            background: var(--bg-card);
+            border: 1px solid var(--cyan);
+            border-radius: 20px;
+            padding: 25px;
+            width: 100%;
+            max-width: 400px;
         }
-        .modal-box {
-            background: #1e293b; width: 85%; padding: 25px; border-radius: 20px;
-            border: 1px solid var(--vessel);
+
+        label { display: block; font-size: 10px; color: var(--cyan); margin: 15px 0 5px; text-transform: uppercase; letter-spacing: 1px; }
+        input, textarea {
+            width: 100%;
+            background: #000;
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #fff;
+            padding: 12px;
+            border-radius: 8px;
+            font-family: 'Inter', sans-serif;
         }
-        textarea {
-            width: 100%; height: 100px; background: #0f172a; border: 1px solid #334155;
-            color: white; border-radius: 10px; padding: 10px; margin-top: 15px; font-size: 16px;
-        }
+
         .btn {
-            width: 100%; padding: 12px; border-radius: 10px; border: none; font-weight: bold;
-            margin-top: 10px; cursor: pointer;
+            width: 100%;
+            padding: 15px;
+            border-radius: 8px;
+            border: none;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: bold;
+            margin-top: 15px;
+            cursor: pointer;
         }
-        .btn-save { background: var(--vessel); color: #020617; }
 
-        nav {
-            display: flex; justify-content: space-around; background: #0f172a; padding: 15px;
-            border-top: 1px solid #1e293b;
+        .btn-save { background: var(--cyan); color: #000; }
+        .btn-cancel { background: transparent; color: var(--text-dim); }
+
+        /* Audit Card */
+        .audit-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 12px;
+            border-left: 4px solid var(--cyan);
         }
-        .nav-tab { color: #64748b; font-size: 12px; font-weight: bold; text-decoration: none; }
-        .nav-tab.active { color: var(--vessel); }
 
-        #audit-view, #archive-view {
-            display: none; position: absolute; inset: 0; background: var(--bg);
-            z-index: 50; padding: 20px; overflow-y: auto;
+        /* Triage Alert */
+        #triage-alert {
+            position: fixed;
+            top: 20px; left: 20px; right: 20px;
+            background: var(--purple);
+            padding: 20px; border-radius: 15px;
+            display: none; z-index: 3000;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.8);
         }
     </style>
 </head>
 <body>
 
-    <header style="padding: 15px; text-align: center;">
-        <h2 style="color: var(--vessel); letter-spacing: 2px; margin: 0;">MIND HQ</h2>
-    </header>
+    <div id="triage-alert">
+        <h2 style="font-family: 'Orbitron'; font-size: 14px;">Archival Check Required</h2>
+        <p id="alert-msg" style="margin: 10px 0; font-size: 14px;"></p>
+        <button class="btn btn-save" style="padding: 10px; margin: 0;" onclick="closeAlert()">Confirm</button>
+    </div>
 
-    <div id="stage">
-        <svg id="vessel" viewBox="0 0 200 400" onclick="handleStageClick(event)">
-            <path class="outline" d="M100,20 C80,20 70,40 70,60 C70,85 85,95 85,100 L80,120 L50,140 L40,200 L55,200 L65,150 L85,155 L85,380 L115,380 L115,155 L135,150 L145,200 L160,200 L150,140 L120,120 L115,100 C115,95 130,85 130,60 C130,40 120,20 100,20 Z" />
-            
-            <path class="neural-path" d="M100,60 L100,150 M100,150 L60,140 M100,150 L140,140" />
+    <main>
+        <!-- MIND HQ -->
+        <section id="screen-hq" class="screen active">
+            <h1>Mind HQ</h1>
+            <p style="font-size: 10px; color: var(--text-dim);">Tap Head to Expand Neural Nodes</p>
 
-            <g class="node" id="node-entry" onclick="openNode('Entry', 'entry', event)">
-                <circle cx="128" cy="65" r="8" fill="var(--entry)" />
-                <text x="138" y="68" fill="var(--entry)" font-size="8">ENTRY</text>
-            </g>
+            <div class="interface-container">
+                <!-- Expanded Brain View -->
+                <div id="brain-map">
+                    <h3 style="font-family: 'Orbitron'; font-size: 10px; color: var(--cyan); text-align: center; margin-bottom: 10px;">Brain Structure</h3>
+                    <svg viewBox="0 0 120 120" width="100%" height="150">
+                        <!-- Entry (By Ear Area) -->
+                        <circle class="clickable-node cyan" cx="100" cy="70" r="8" onclick="openNode('Entry (External Trigger)')" />
+                        <text x="100" y="85" class="node-label" text-anchor="middle">Entry</text>
 
-            <g id="brain-group" class="brain-ui">
-                <circle id="head-trigger" cx="100" cy="55" r="25" fill="transparent" onclick="toggleBrain(event)" />
-                
-                <g class="node" onclick="openNode('Reception', 'reception', event)">
-                    <circle cx="100" cy="65" r="8" fill="var(--reception)" />
-                </g>
-                <g class="node" onclick="openNode('Management', 'mgmt', event)">
-                    <circle cx="85" cy="50" r="8" fill="var(--mgmt)" />
-                </g>
-                <g class="node" onclick="openNode('Workers', 'workers', event)">
-                    <circle cx="100" cy="35" r="8" fill="var(--workers)" />
-                </g>
-            </g>
+                        <!-- Reception (Center) -->
+                        <circle class="clickable-node purple" cx="60" cy="65" r="10" onclick="openNode('Reception (Core Belief)')" />
+                        <text x="60" y="85" class="node-label" text-anchor="middle">Reception</text>
 
-            <circle class="hotspot" id="hs-heart" cx="100" cy="140" r="6" onclick="openNode('Worker-Heart', 'workers', event)" />
-            <circle class="hotspot" id="hs-stomach" cx="100" cy="180" r="6" onclick="openNode('Worker-Gut', 'workers', event)" />
-            <circle class="hotspot" id="hs-shoulders" cx="80" cy="120" r="5" onclick="openNode('Worker-Load', 'workers', event)" />
-        </svg>
+                        <!-- Management (Front) -->
+                        <circle class="clickable-node green" cx="30" cy="60" r="8" onclick="openNode('Management (Rules)')" />
+                        <text x="30" y="75" class="node-label" text-anchor="middle">Mgmt</text>
 
-        <div id="modal" class="modal">
-            <div class="modal-content modal-box">
-                <h3 id="modal-title" style="margin: 0;"></h3>
-                <p id="modal-sub" style="font-size: 12px; color: #94a3b8;"></p>
-                <textarea id="node-input" placeholder="Observe the flow..."></textarea>
-                <button class="btn btn-save" onclick="saveEntry()">LOG TO HQ</button>
-                <button class="btn" style="background: none; color: #64748b;" onclick="closeModal()">CANCEL</button>
+                        <!-- Workers (Top) -->
+                        <circle class="clickable-node red" cx="60" cy="30" r="8" onclick="openNode('Workers (Unhelpful Behavior)')" />
+                        <text x="60" y="20" class="node-label" text-anchor="middle">Workers</text>
+                        
+                        <!-- Connecting Path -->
+                        <path d="M100,70 Q60,70 60,65 T30,60" fill="none" stroke="rgba(255,255,255,0.2)" stroke-dasharray="2" />
+                    </svg>
+                    <button class="btn-cancel" style="width:100%; font-size: 10px;" onclick="toggleBrain()">Close Brain Map</button>
+                </div>
+
+                <!-- Main Body Silhouette -->
+                <svg class="body-silhouette" viewBox="0 0 200 500">
+                    <!-- Head Area (Trigger) -->
+                    <path id="head-sensor" d="M100,40 C80,40 70,55 70,80 C70,105 85,120 100,120 C115,120 130,105 130,80 C130,55 120,40 100,40" 
+                          fill="rgba(34, 211, 238, 0.1)" stroke="var(--cyan)" stroke-width="1.5" style="cursor: pointer;" onclick="toggleBrain()"/>
+                    <circle cx="100" cy="80" r="5" fill="var(--cyan)">
+                        <animate attributeName="opacity" values="1;0.2;1" dur="2s" repeatCount="indefinite" />
+                    </circle>
+
+                    <!-- Anatomical Outline (Subtle) -->
+                    <path d="M100,120 L100,135 M70,140 L130,140 M100,135 L60,150 L50,300 M100,135 L140,150 L150,300 M70,350 L70,480 M130,350 L130,480 M60,150 L60,350 L140,350 L140,150" 
+                          fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1" />
+
+                    <!-- BODY NODES ONLY: Hands, Heart, Gut, Legs -->
+                    <!-- Heart -->
+                    <circle class="clickable-node red" cx="100" cy="180" r="8" onclick="openNode('Heart (Emotion Center)')" />
+                    <text x="112" y="184" class="node-label">Heart</text>
+
+                    <!-- Gut -->
+                    <circle class="clickable-node purple" cx="100" cy="280" r="8" onclick="openNode('Gut (Instinct)')" />
+                    <text x="112" y="284" class="node-label">Gut</text>
+
+                    <!-- Hands -->
+                    <circle class="clickable-node cyan" cx="48" cy="300" r="7" onclick="openNode('Left Hand (Action)')" />
+                    <circle class="clickable-node cyan" cx="152" cy="300" r="7" onclick="openNode('Right Hand (Action)')" />
+                    <text x="48" y="320" class="node-label" text-anchor="middle">Action</text>
+                    <text x="152" y="320" class="node-label" text-anchor="middle">Action</text>
+
+                    <!-- Legs -->
+                    <circle class="clickable-node green" cx="70" cy="420" r="7" onclick="openNode('Left Leg (Movement)')" />
+                    <circle class="clickable-node green" cx="130" cy="420" r="7" onclick="openNode('Right Leg (Movement)')" />
+                    <text x="100" y="440" class="node-label" text-anchor="middle">Legs/Stability</text>
+                </svg>
             </div>
-        </div>
+        </section>
 
-        <div id="audit-view">
-            <button onclick="hideViews()" class="btn">Back to Blueprint</button>
-            <div id="audit-list"></div>
-        </div>
-        <div id="archive-view">
-            <button onclick="hideViews()" class="btn">Back to Blueprint</button>
-            <h3>The Archive</h3>
-            <textarea id="archive-input" placeholder="Personality, History, Empath triggers..."></textarea>
-            <button class="btn btn-save" onclick="saveArchive()">UPDATE ARCHIVE</button>
+        <!-- THE ARCHIVE -->
+        <section id="screen-archive" class="screen">
+            <h1>The Archive</h1>
+            <label>Personality Traits</label>
+            <textarea id="arc-traits" rows="3" placeholder="Core defining traits..."></textarea>
+            
+            <label>Historical Context</label>
+            <textarea id="arc-history" rows="3" placeholder="Relevant past events..."></textarea>
+            
+            <label>Known Triggers</label>
+            <textarea id="arc-triggers" rows="3" placeholder="External factors that spike system..."></textarea>
+            
+            <button class="btn btn-save" onclick="saveArchive()">Persist Archive</button>
+        </section>
+
+        <!-- WEEKLY AUDIT -->
+        <section id="screen-audit" class="screen">
+            <h1>Weekly Audit</h1>
+            <div id="audit-list" style="margin-top:20px;"></div>
+            <button class="btn btn-cancel" onclick="clearAudit()" style="border: 1px solid var(--red); color: var(--red); margin-top:30px;">Purge Audit History</button>
+        </section>
+    </main>
+
+    <!-- INPUT MODAL -->
+    <div id="node-modal" class="modal-overlay">
+        <div class="modal">
+            <h2 id="modal-title" style="font-family: 'Orbitron'; color: var(--cyan); font-size: 16px;">Node Input</h2>
+            <label>Date & Time</label>
+            <input type="datetime-local" id="log-date">
+            <label>What is happening here?</label>
+            <textarea id="log-text" rows="4"></textarea>
+            <button class="btn btn-save" onclick="saveLog()">Save to Audit</button>
+            <button class="btn btn-cancel" onclick="closeModal()">Dismiss</button>
         </div>
     </div>
 
     <nav>
-        <a href="#" class="nav-tab active" onclick="hideViews()">BLUEPRINT</a>
-        <a href="#" class="nav-tab" onclick="showView('archive')">ARCHIVE</a>
-        <a href="#" class="nav-tab" onclick="showView('audit')">AUDIT</a>
+        <button class="nav-item active" onclick="showScreen('hq', this)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+            <span>Mind HQ</span>
+        </button>
+        <button class="nav-item" onclick="showScreen('archive', this)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <span>Archive</span>
+        </button>
+        <button class="nav-item" onclick="showScreen('audit', this)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            <span>Audit</span>
+        </button>
     </nav>
 
     <script>
-        let currentRoom = '';
+        let activeNode = "";
+        let auditData = JSON.parse(localStorage.getItem('mindhq_audit')) || [];
 
-        function toggleBrain(e) {
-            e.stopPropagation();
-            document.getElementById('brain-group').classList.toggle('expanded');
-        }
-
-        function openNode(room, colorVar, e) {
-            e.stopPropagation();
-            currentRoom = room;
-            const modal = document.getElementById('modal');
-            const title = document.getElementById('modal-title');
-            const sub = document.getElementById('modal-sub');
-            
-            modal.style.display = 'flex';
-            title.innerText = room.toUpperCase();
-            title.style.color = `var(--${colorVar})`;
-            
-            if(room === 'Reception') sub.innerText = "John: Is this a Fact or an Archive Opinion?";
-            else sub.innerText = "Triage the sensory data below.";
-        }
-
-        function closeModal() { document.getElementById('modal').style.display = 'none'; }
-
-        function saveEntry() {
-            const text = document.getElementById('node-input').value;
-            if(!text) return;
-            const logs = JSON.parse(localStorage.getItem('hq_logs') || '[]');
-            logs.unshift({ room: currentRoom, text, time: new Date().toLocaleString() });
-            localStorage.setItem('hq_logs', JSON.stringify(logs));
-            closeModal();
-            document.getElementById('node-input').value = '';
-        }
-
-        function showView(id) {
-            document.getElementById(id + '-view').style.display = 'block';
+        // App Navigation
+        function showScreen(id, btn) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById('screen-' + id).classList.add('active');
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            btn.classList.add('active');
             if(id === 'audit') renderAudit();
-            if(id === 'archive') document.getElementById('archive-input').value = localStorage.getItem('hq_arch') || '';
+            if(id === 'archive') loadArchive();
         }
 
-        function hideViews() {
-            document.getElementById('audit-view').style.display = 'none';
-            document.getElementById('archive-view').style.display = 'none';
+        // Brain Interaction
+        function toggleBrain() {
+            const brain = document.getElementById('brain-map');
+            brain.classList.toggle('active');
+        }
+
+        // Modal Logic
+        function openNode(nodeName) {
+            activeNode = nodeName;
+            document.getElementById('modal-title').innerText = nodeName;
+            document.getElementById('log-text').value = "";
+            
+            // Set current time
+            const now = new Date();
+            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+            document.getElementById('log-date').value = now.toISOString().slice(0, 16);
+            
+            document.getElementById('node-modal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('node-modal').style.display = 'none';
+        }
+
+        // Data Management
+        function saveLog() {
+            const text = document.getElementById('log-text').value;
+            const date = document.getElementById('log-date').value;
+            if(!text) return;
+
+            const entry = {
+                id: Date.now(),
+                node: activeNode,
+                text: text,
+                time: date
+            };
+
+            auditData.unshift(entry);
+            localStorage.setItem('mindhq_audit', JSON.stringify(auditData));
+
+            if(activeNode.includes("Reception")) {
+                document.getElementById('alert-msg').innerText = "John, checking The Archive... Is this a Fact or an Opinion? Do not send this to Management yet.";
+                document.getElementById('triage-alert').style.display = "block";
+            }
+
+            closeModal();
+            renderAudit();
+        }
+
+        function closeAlert() {
+            document.getElementById('triage-alert').style.display = "none";
         }
 
         function renderAudit() {
             const list = document.getElementById('audit-list');
-            const logs = JSON.parse(localStorage.getItem('hq_logs') || '[]');
-            list.innerHTML = logs.map(l => `
-                <div style="background:#1e293b; padding:15px; margin-top:10px; border-radius:10px; border-left:3px solid var(--vessel);">
-                    <div style="font-size:10px; color:var(--vessel);">${l.time} | ${l.room}</div>
-                    <div style="margin-top:5px;">${l.text}</div>
-                </div>
-            `).join('');
+            list.innerHTML = auditData.length ? "" : "<p style='text-align:center; color:var(--text-dim)'>No data logged for this period.</p>";
+            
+            auditData.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'audit-card';
+                card.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; margin-bottom:10px; font-size:10px; font-family:'Orbitron'">
+                        <span style="color:var(--cyan)">${item.node}</span>
+                        <span style="color:var(--text-dim)">${new Date(item.time).toLocaleString()}</span>
+                    </div>
+                    <div style="font-size:14px; line-height:1.4">${item.text}</div>
+                `;
+                list.appendChild(card);
+            });
+        }
+
+        function clearAudit() {
+            if(confirm("Purge all triage history?")) {
+                auditData = [];
+                localStorage.setItem('mindhq_audit', JSON.stringify(auditData));
+                renderAudit();
+            }
         }
 
         function saveArchive() {
-            localStorage.setItem('hq_arch', document.getElementById('archive-input').value);
-            alert("Archive updated.");
+            const archive = {
+                traits: document.getElementById('arc-traits').value,
+                history: document.getElementById('arc-history').value,
+                triggers: document.getElementById('arc-triggers').value
+            };
+            localStorage.setItem('mindhq_archive', JSON.stringify(archive));
+            alert("Archive persistence confirmed.");
         }
-        
-        function handleStageClick(e) {
-            // Closes expanded brain if clicking empty stage space
-            document.getElementById('brain-group').classList.remove('expanded');
+
+        function loadArchive() {
+            const archive = JSON.parse(localStorage.getItem('mindhq_archive'));
+            if(archive) {
+                document.getElementById('arc-traits').value = archive.traits || "";
+                document.getElementById('arc-history').value = archive.history || "";
+                document.getElementById('arc-triggers').value = archive.triggers || "";
+            }
         }
+
+        // Init
+        window.onload = loadArchive;
     </script>
 </body>
 </html>
