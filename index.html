@@ -3,20 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mind HQ - Neural Interface</title>
+    <title>Mind HQ | Professional Neural Interface</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;400;600&display=swap');
-
         :root {
-            --bg: #0f172a;
-            --card: #1e293b;
-            --entry: #22d3ee;     /* Neon Cyan */
-            --reception: #a855f7; /* Purple */
-            --mgmt: #10b981;      /* Emerald */
-            --workers: #f43f5e;   /* Red/Orange */
-            --text: #f8fafc;
-            --dim: #94a3b8;
-            --glow: 0 0 15px rgba(34, 211, 238, 0.4);
+            --bg: #000000;
+            --card-bg: #111111;
+            --cyan: #00e5ff;
+            --purple: #a855f7;
+            --green: #22c55e;
+            --red: #ff4d4d;
+            --white: #ffffff;
+            --gray: #666666;
+            --border: rgba(255, 255, 255, 0.1);
         }
 
         * {
@@ -28,433 +26,443 @@
 
         body {
             background-color: var(--bg);
-            color: var(--text);
-            font-family: 'Inter', sans-serif;
+            color: var(--white);
+            font-family: -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
             height: 100vh;
+            overflow: hidden;
             display: flex;
             flex-direction: column;
-            overflow: hidden;
         }
 
-        h1, h2, h3 { font-family: 'Orbitron', sans-serif; text-transform: uppercase; letter-spacing: 2px; }
+        /* Typography */
+        h1, h2 { font-weight: 300; letter-spacing: 2px; text-transform: uppercase; font-size: 14px; color: var(--gray); }
+        .node-label { font-size: 12px; font-weight: 700; letter-spacing: 1px; }
 
         /* Navigation */
         nav {
             position: fixed;
             bottom: 0;
             width: 100%;
-            height: 75px;
-            background: rgba(15, 23, 42, 0.95);
-            backdrop-filter: blur(15px);
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            height: 80px;
+            background: #000;
+            border-top: 1px solid var(--border);
             display: flex;
             justify-content: space-around;
             align-items: center;
             z-index: 1000;
+            padding-bottom: 20px;
         }
 
         .nav-item {
             display: flex;
             flex-direction: column;
             align-items: center;
-            color: var(--dim);
+            color: var(--gray);
             font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 1px;
             cursor: pointer;
             transition: 0.3s;
         }
 
-        .nav-item.active { color: var(--entry); text-shadow: var(--glow); }
-        .nav-item svg { width: 24px; height: 24px; margin-bottom: 4px; stroke-width: 1.5; }
+        .nav-item.active { color: var(--cyan); }
+        .nav-item svg { width: 24px; height: 24px; margin-bottom: 4px; }
 
-        /* Viewport */
-        main {
-            flex: 1;
-            position: relative;
-            overflow-y: auto;
-            padding-bottom: 90px;
-        }
-
+        /* Screens */
+        main { flex: 1; position: relative; width: 100%; height: 100%; }
         .screen {
+            position: absolute;
+            inset: 0;
             display: none;
             padding: 20px;
-            animation: fadeIn 0.4s ease-out;
+            padding-bottom: 100px;
+            overflow-y: auto;
         }
-
         .screen.active { display: block; }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* HQ Interface */
-        .hq-wrapper {
-            position: relative;
-            width: 100%;
-            height: 70vh;
+        /* The Vessel (Body View) */
+        .vessel-container {
+            height: 100%;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
+            justify-content: center;
         }
 
-        /* The Brain Pop-out */
-        #side-brain {
-            position: absolute;
-            top: 20px;
-            right: 10px;
-            width: 180px;
-            background: rgba(30, 41, 59, 0.9);
-            border: 1px solid var(--entry);
-            border-radius: 20px;
-            padding: 15px;
+        svg#anatomy-vessel {
+            height: 85%;
+            width: auto;
+        }
+
+        .outline-path { fill: none; stroke: var(--white); stroke-width: 1; }
+        .head-zone { fill: transparent; cursor: pointer; }
+        
+        .hotspot {
+            cursor: pointer;
+            filter: drop-shadow(0 0 8px var(--red));
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.6; transform: scale(1); transform-origin: center; }
+            50% { opacity: 1; transform: scale(1.1); transform-origin: center; }
+            100% { opacity: 0.6; transform: scale(1); transform-origin: center; }
+        }
+
+        /* Neural Mapping (Brain View) */
+        #neural-mapping {
+            background: var(--bg);
+            z-index: 100;
             display: none;
             flex-direction: column;
-            gap: 12px;
-            z-index: 500;
-            box-shadow: 0 0 30px rgba(0,0,0,0.6);
-            animation: slideIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            align-items: center;
         }
 
-        @keyframes slideIn {
-            from { transform: translateX(50px); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
+        #neural-mapping.active { display: flex; }
+
+        .brain-svg-container { width: 100%; max-width: 300px; margin-bottom: 30px; }
+
+        .node-stack {
+            width: 100%;
+            max-width: 340px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
         }
 
-        /* SVG Styles */
-        svg#vessel { height: 95%; filter: drop-shadow(0 0 5px rgba(255,255,255,0.05)); }
-        .outline { stroke: #334155; stroke-width: 1.5; fill: rgba(255,255,255,0.02); }
-        .node { cursor: pointer; transition: 0.3s; }
-        .node:active { transform: scale(1.2); }
-        .glow-node { filter: drop-shadow(0 0 8px currentColor); }
+        .node-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
 
-        /* Labels */
-        .label { font-family: 'Orbitron'; font-size: 8px; fill: var(--dim); pointer-events: none; }
+        .node-card:active { transform: scale(0.98); }
+        .node-card.cyan { border-left: 4px solid var(--cyan); }
+        .node-card.purple { border-left: 4px solid var(--purple); }
+        .node-card.green { border-left: 4px solid var(--green); }
+        .node-card.red { border-left: 4px solid var(--red); }
 
-        /* Modal */
-        .modal-overlay {
+        .reception-subtext {
+            display: block;
+            margin-top: 8px;
+            font-size: 13px;
+            color: var(--gray);
+            font-style: italic;
+        }
+
+        /* Input Modal */
+        #modal {
             position: fixed;
             inset: 0;
-            background: rgba(0,0,0,0.9);
-            display: none;
-            justify-content: center;
-            align-items: center;
+            background: var(--bg);
             z-index: 2000;
-            padding: 20px;
-        }
-
-        .modal {
-            background: var(--card);
-            width: 100%;
-            max-width: 400px;
-            border-radius: 20px;
-            padding: 25px;
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-
-        textarea {
-            width: 100%;
-            height: 120px;
-            background: #050810;
-            border: 1px solid #334155;
-            color: white;
-            padding: 12px;
-            border-radius: 12px;
-            margin: 15px 0;
-            font-size: 16px;
-            resize: none;
-        }
-
-        .btn {
-            width: 100%;
-            padding: 16px;
-            border-radius: 12px;
-            border: none;
-            font-weight: bold;
-            font-family: 'Orbitron';
-            cursor: pointer;
-            margin-top: 10px;
-        }
-
-        .btn-entry { background: var(--entry); color: #000; }
-        .btn-ghost { background: transparent; color: var(--dim); border: 1px solid #334155; }
-
-        /* Triage Alert */
-        #triage-alert {
-            position: fixed;
-            top: 20px; left: 20px; right: 20px;
-            background: var(--reception);
-            color: white;
-            padding: 20px;
-            border-radius: 15px;
             display: none;
-            z-index: 3000;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.8);
-            animation: alertPop 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            flex-direction: column;
+            padding: 40px 20px;
         }
 
-        @keyframes alertPop { from { transform: translateY(-100px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        
+        textarea {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: var(--white);
+            font-size: 18px;
+            line-height: 1.6;
+            resize: none;
+            outline: none;
+            padding: 10px;
+            border-left: 1px solid var(--border);
+        }
 
-        /* Audit List */
+        .btn-save {
+            background: var(--white);
+            color: var(--bg);
+            padding: 20px;
+            border-radius: 12px;
+            font-weight: 700;
+            text-align: center;
+            margin-top: 20px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Weekly Audit */
         .audit-card {
-            background: var(--card);
-            border-radius: 15px;
-            padding: 16px;
-            margin-bottom: 12px;
-            border-left: 4px solid var(--entry);
+            background: var(--card-bg);
+            border-radius: 0;
+            padding: 20px;
+            margin-bottom: 2px;
+            position: relative;
         }
-        .audit-header {
+
+        .audit-border {
+            position: absolute;
+            left: 0; top: 0; bottom: 0;
+            width: 4px;
+        }
+
+        .audit-meta {
             display: flex;
             justify-content: space-between;
-            font-size: 10px;
-            text-transform: uppercase;
-            font-family: 'Orbitron';
-            margin-bottom: 8px;
+            margin-bottom: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--gray);
         }
 
-        .pulse { animation: pulseAnim 2s infinite; }
-        @keyframes pulseAnim {
-            0% { opacity: 0.6; }
-            50% { opacity: 1; filter: drop-shadow(0 0 12px currentColor); }
-            100% { opacity: 0.6; }
+        .audit-data {
+            font-size: 15px;
+            line-height: 1.5;
+            color: var(--white);
         }
+
+        .audit-separator {
+            height: 1px;
+            background: var(--border);
+            margin: 20px 0;
+        }
+
+        /* Buttons */
+        .exit-btn {
+            margin-top: 40px;
+            color: var(--gray);
+            text-transform: uppercase;
+            font-size: 11px;
+            letter-spacing: 2px;
+            cursor: pointer;
+            padding: 10px;
+        }
+
+        .node-title-modal { font-size: 24px; font-weight: 300; }
     </style>
 </head>
 <body>
 
-    <div id="triage-alert">
-        <h3 style="font-size: 14px; margin-bottom: 8px;">ARCHIVAL TRIAGE</h3>
-        <p id="alert-msg" style="font-size: 14px; line-height: 1.4;"></p>
-        <button class="btn" style="background: white; color: black; margin-top: 15px; padding: 10px;" onclick="closeTriage()">Acknowledge</button>
-    </div>
-
     <main>
-        <!-- MIND HQ SCREEN -->
-        <section id="screen-hq" class="screen active">
-            <h1 style="color: var(--entry); font-size: 18px; margin-bottom: 5px;">MIND HQ</h1>
-            <p style="font-size: 10px; color: var(--dim);">Tap head for Neural Mapping | Tap sensors for Body Log</p>
+        <!-- BLUEPRINT SCREEN (BODY) -->
+        <section id="blueprint-screen" class="screen active">
+            <div class="vessel-container">
+                <header style="text-align: center; margin-bottom: 20px;">
+                    <h2>Mind HQ</h2>
+                    <p style="font-size: 10px; color: var(--gray); margin-top: 5px;">Anatomical Control System</p>
+                </header>
 
-            <div class="hq-wrapper">
-                <!-- POP-OUT SIDE BRAIN -->
-                <div id="side-brain">
-                    <h3 style="font-size: 10px; color: var(--entry); text-align: center; margin-bottom: 5px;">NEURAL MAP</h3>
+                <svg id="anatomy-vessel" viewBox="0 0 200 450">
+                    <!-- High Contrast white-line silhouette -->
+                    <path class="outline-path" d="M100,20 C85,20 75,30 75,50 C75,70 85,85 85,95 L80,110 L45,130 L35,190 L50,190 L60,145 L85,150 L85,420 L115,420 L115,150 L140,145 L150,190 L165,190 L155,130 L120,110 L115,95 C115,85 125,70 125,50 C125,30 115,20 100,20 Z" />
                     
-                    <button class="btn btn-entry" style="font-size: 10px; background: rgba(34, 211, 238, 0.1); color: var(--entry); border: 1px solid var(--entry);" onclick="openNode('Entry (External Trigger)')">1. ENTRY (Ear/Back)</button>
-                    
-                    <button class="btn btn-entry" style="font-size: 10px; background: rgba(168, 85, 247, 0.1); color: var(--reception); border: 1px solid var(--reception);" onclick="openNode('Reception (Core Belief)')">2. RECEPTION (Mid)</button>
-                    
-                    <button class="btn btn-entry" style="font-size: 10px; background: rgba(16, 185, 129, 0.1); color: var(--mgmt); border: 1px solid var(--mgmt);" onclick="openNode('Management (Rules)')">3. MGMT (Front)</button>
-                    
-                    <button class="btn btn-entry" style="font-size: 10px; background: rgba(244, 94, 94, 0.1); color: var(--workers); border: 1px solid var(--workers);" onclick="openNode('Workers (Behavior)')">4. WORKERS (Top)</button>
-                    
-                    <button class="btn-ghost" style="border:none; font-size: 9px; margin-top: 5px;" onclick="toggleBrain()">CLOSE MAP</button>
-                </div>
+                    <!-- Head Area Trigger -->
+                    <path class="head-zone" d="M75,20 H125 V100 H75 Z" onclick="toggleNeuralView(true)" />
 
-                <!-- MAIN VESSEL SVG -->
-                <svg id="vessel" viewBox="0 0 200 450" xmlns="http://www.w3.org/2000/svg">
-                    <!-- Anatomical Silhouette -->
-                    <path class="outline" d="M100,20 C85,20 75,30 75,50 C75,70 85,85 85,95 L80,110 L45,130 L35,190 L50,190 L60,145 L85,150 L85,420 L115,420 L115,150 L140,145 L150,190 L165,190 L155,130 L120,110 L115,95 C115,85 125,70 125,50 C125,30 115,20 100,20 Z" />
-
-                    <!-- Head Trigger Area -->
-                    <circle cx="100" cy="50" r="30" fill="transparent" style="cursor: pointer;" onclick="toggleBrain()" />
-                    <circle cx="100" cy="50" r="4" fill="var(--entry)" class="pulse" />
-
-                    <!-- Body Sensors -->
-                    <!-- Shoulders -->
-                    <circle cx="85" cy="115" r="7" fill="var(--entry)" class="node glow-node pulse" onclick="openNode('Shoulders (Tension)')" />
-                    <circle cx="115" cy="115" r="7" fill="var(--entry)" class="node glow-node pulse" onclick="openNode('Shoulders (Tension)')" />
-                    
+                    <!-- Worker Hotspots (Red) -->
                     <!-- Heart -->
-                    <circle cx="100" cy="160" r="10" fill="var(--workers)" class="node glow-node pulse" onclick="openNode('Heart (Emotion)')" />
-                    
-                    <!-- Stomach -->
-                    <circle cx="100" cy="240" r="9" fill="var(--reception)" class="node glow-node pulse" onclick="openNode('Stomach (Gut)')" />
+                    <circle class="hotspot" cx="100" cy="140" r="6" fill="var(--red)" onclick="openInput('WORKERS', 'red')" />
+                    <!-- Gut -->
+                    <circle class="hotspot" cx="100" cy="200" r="6" fill="var(--red)" onclick="openInput('WORKERS', 'red')" />
+                    <!-- Hands -->
+                    <circle class="hotspot" cx="38" cy="190" r="5" fill="var(--red)" onclick="openInput('WORKERS', 'red')" />
+                    <circle class="hotspot" cx="162" cy="190" r="5" fill="var(--red)" onclick="openInput('WORKERS', 'red')" />
+                    <!-- Legs -->
+                    <circle class="hotspot" cx="85" cy="300" r="6" fill="var(--red)" onclick="openInput('WORKERS', 'red')" />
+                    <circle class="hotspot" cx="115" cy="300" r="6" fill="var(--red)" onclick="openInput('WORKERS', 'red')" />
                 </svg>
             </div>
         </section>
 
-        <!-- THE ARCHIVE SCREEN -->
-        <section id="screen-archive" class="screen">
-            <h1 style="color: var(--reception); font-size: 18px;">The Archive</h1>
-            <p style="font-size: 10px; color: var(--dim); margin-bottom: 20px;">Permanent system traits and historical context</p>
-            
-            <div style="margin-bottom: 20px;">
-                <label style="font-family:'Orbitron'; font-size: 9px; color: var(--entry);">Historical Context</label>
-                <textarea id="arc-history" placeholder="Enter key past events..."></textarea>
+        <!-- NEURAL MAPPING SCREEN (BRAIN) -->
+        <section id="neural-mapping" class="screen">
+            <header style="text-align: center; margin-bottom: 30px;">
+                <h2>Neural Mapping</h2>
+            </header>
+
+            <div class="brain-svg-container">
+                <svg viewBox="0 0 200 150">
+                    <!-- Detailed Anatomical Brain Outline -->
+                    <path fill="none" stroke="var(--white)" stroke-width="0.8" d="M100,20 C60,20 30,50 30,90 C30,130 60,140 100,140 C140,140 170,130 170,90 C170,50 140,20 100,20 Z" />
+                    <path fill="none" stroke="var(--border)" stroke-width="0.5" d="M100,20 V140 M30,90 H170 M70,30 Q100,80 130,30" />
+                    <circle cx="100" cy="80" r="40" fill="none" stroke="var(--border)" stroke-width="0.5" />
+                </svg>
             </div>
-            
-            <div style="margin-bottom: 20px;">
-                <label style="font-family:'Orbitron'; font-size: 9px; color: var(--entry);">Personality Traits</label>
-                <textarea id="arc-traits" placeholder="Define core personality data..."></textarea>
+
+            <div class="node-stack">
+                <div class="node-card cyan" onclick="openInput('ENTRY', 'cyan')">
+                    <span class="node-label" style="color: var(--cyan)">1. ENTRY</span>
+                </div>
+                
+                <div class="node-card purple" onclick="openInput('RECEPTION', 'purple')">
+                    <span class="node-label" style="color: var(--purple)">2. RECEPTION</span>
+                    <span class="reception-subtext">John, is this a Fact or an Archive Opinion?</span>
+                </div>
+
+                <div class="node-card green" onclick="openInput('MANAGEMENT', 'green')">
+                    <span class="node-label" style="color: var(--green)">3. MANAGEMENT</span>
+                </div>
+
+                <div class="node-card red" onclick="openInput('WORKERS', 'red')">
+                    <span class="node-label" style="color: var(--red)">4. WORKERS</span>
+                </div>
             </div>
-            
-            <div style="margin-bottom: 20px;">
-                <label style="font-family:'Orbitron'; font-size: 9px; color: var(--entry);">Specific Triggers</label>
-                <textarea id="arc-triggers" placeholder="What words or actions spike the system?"></textarea>
-            </div>
-            
-            <button class="btn btn-entry" onclick="saveArchive()">Persist to Archive</button>
+
+            <div class="exit-btn" onclick="toggleNeuralView(false)">Return to Body View</div>
         </section>
 
         <!-- WEEKLY AUDIT SCREEN -->
-        <section id="screen-audit" class="screen">
-            <h1 style="color: var(--mgmt); font-size: 18px;">Weekly Audit</h1>
-            <p style="font-size: 10px; color: var(--dim); margin-bottom: 20px;">Mental triage history flow</p>
-            
+        <section id="audit-screen" class="screen">
+            <header style="margin-bottom: 30px;">
+                <h2>Weekly Audit</h2>
+            </header>
             <div id="audit-list">
-                <!-- Entries injected here -->
+                <!-- Data Appended here -->
             </div>
-            
-            <button class="btn btn-ghost" style="color: var(--workers); border-color: var(--workers); margin-top: 20px;" onclick="clearAudit()">Purge Audit History</button>
+            <p id="empty-msg" style="text-align: center; color: var(--gray); margin-top: 50px; font-size: 12px; display: none;">No neural data recorded.</p>
         </section>
     </main>
 
-    <!-- INPUT MODAL -->
-    <div id="modal-node" class="modal-overlay">
-        <div class="modal">
-            <h3 id="node-title" style="color: var(--entry); font-size: 14px;">Node Entry</h3>
-            <p style="font-size: 11px; color: var(--dim); margin-top: 5px;">Documenting current system state...</p>
-            
-            <textarea id="node-input" placeholder="What is happening in this area?"></textarea>
-            
-            <button class="btn btn-entry" onclick="processEntry()">Save to Audit</button>
-            <button class="btn btn-ghost" onclick="closeModal()">Dismiss</button>
+    <!-- FULL SCREEN INPUT MODAL -->
+    <div id="modal">
+        <div class="modal-header">
+            <div id="modal-node-title" class="node-title-modal">ENTRY</div>
+            <div style="color: var(--gray); cursor: pointer;" onclick="closeModal()">CANCEL</div>
         </div>
+        <textarea id="modal-textarea" placeholder="Input neural data..."></textarea>
+        <div class="btn-save" onclick="saveData()">Save to HQ</div>
     </div>
 
-    <!-- BOTTOM NAVIGATION -->
+    <!-- BOTTOM NAV -->
     <nav>
-        <div class="nav-item active" onclick="showTab('hq', this)">
+        <div class="nav-item active" onclick="switchTab('blueprint')">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-            <span>Mind HQ</span>
+            <span>BLUEPRINT</span>
         </div>
-        <div class="nav-item" onclick="showTab('archive', this)">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M4 4.5A2.5 2.5 0 0 1 6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15z"/></svg>
-            <span>Archive</span>
-        </div>
-        <div class="nav-item" onclick="showTab('audit', this)">
+        <div class="nav-item" onclick="switchTab('audit')">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-            <span>Audit</span>
+            <span>WEEKLY AUDIT</span>
         </div>
     </nav>
 
     <script>
-        let activeRoom = "";
-        let logs = JSON.parse(localStorage.getItem('mindhq_logs')) || [];
+        // State Management
+        let currentActiveNode = "";
+        let currentActiveColor = "";
+        let auditData = JSON.parse(localStorage.getItem('mindhq_data')) || [];
 
-        // Tab Management
-        function showTab(id, el) {
+        // Initial Load
+        window.onload = () => {
+            renderAudit();
+        };
+
+        // Navigation
+        function switchTab(tabId) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-            document.getElementById('screen-' + id).classList.add('active');
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            el.classList.add('active');
-            if(id === 'audit') renderAudit();
-            if(id === 'archive') loadArchive();
+            
+            if (tabId === 'blueprint') {
+                document.getElementById('blueprint-screen').classList.add('active');
+                event.currentTarget.classList.add('active');
+            } else {
+                document.getElementById('audit-screen').classList.add('active');
+                event.currentTarget.classList.add('active');
+                renderAudit();
+            }
+            toggleNeuralView(false); // Reset brain view when switching tabs
         }
 
-        // Brain Interaction
-        function toggleBrain() {
-            const brain = document.getElementById('side-brain');
-            brain.style.display = (brain.style.display === 'flex') ? 'none' : 'flex';
+        function toggleNeuralView(show) {
+            const neural = document.getElementById('neural-mapping');
+            const blueprint = document.getElementById('blueprint-screen');
+            if (show) {
+                neural.style.display = 'flex';
+                blueprint.classList.remove('active');
+            } else {
+                neural.style.display = 'none';
+                blueprint.classList.add('active');
+            }
         }
 
-        // Entry Logic
-        function openNode(nodeName) {
-            activeRoom = nodeName;
-            document.getElementById('node-title').innerText = nodeName.toUpperCase();
-            document.getElementById('node-input').value = "";
-            document.getElementById('modal-node').style.display = 'flex';
+        // Input Modal Logic
+        function openInput(nodeName, color) {
+            currentActiveNode = nodeName;
+            currentActiveColor = `var(--${color})`;
+            const modal = document.getElementById('modal');
+            const title = document.getElementById('modal-node-title');
+            const textarea = document.getElementById('modal-textarea');
+            
+            title.innerText = nodeName;
+            title.style.color = currentActiveColor;
+            textarea.value = "";
+            textarea.style.borderLeft = `2px solid ${currentActiveColor}`;
+            
+            modal.style.display = 'flex';
+            textarea.focus();
         }
 
         function closeModal() {
-            document.getElementById('modal-node').style.display = 'none';
+            document.getElementById('modal').style.display = 'none';
         }
 
-        function processEntry() {
-            const text = document.getElementById('node-input').value.trim();
-            if (!text) return;
+        // Data Persistence
+        function saveData() {
+            const text = document.getElementById('modal-textarea').value;
+            if (!text.trim()) return closeModal();
 
             const entry = {
-                id: Date.now(),
-                room: activeRoom,
-                content: text,
-                timestamp: new Date().toLocaleString()
+                timestamp: formatTimestamp(new Date()),
+                node: currentActiveNode,
+                color: currentActiveColor,
+                data: text
             };
 
-            logs.unshift(entry);
-            localStorage.setItem('mindhq_logs', JSON.stringify(logs));
-
-            // TRIAGE LOGIC
-            if (activeRoom.includes("Reception")) {
-                document.getElementById('alert-msg').innerText = "John, checking The Archive... Is this a Fact or an Opinion? Do not send this to Management yet.";
-                document.getElementById('triage-alert').style.display = 'block';
-            }
-
+            auditData.unshift(entry);
+            localStorage.setItem('mindhq_data', JSON.stringify(auditData));
+            
             closeModal();
             renderAudit();
+            // Automatically switch to audit view
+            switchTab('audit');
         }
 
-        function closeTriage() {
-            document.getElementById('triage-alert').style.display = 'none';
-        }
-
-        // Archive Management
-        function saveArchive() {
-            const data = {
-                history: document.getElementById('arc-history').value,
-                traits: document.getElementById('arc-traits').value,
-                triggers: document.getElementById('arc-triggers').value
-            };
-            localStorage.setItem('mindhq_archive', JSON.stringify(data));
-            alert("SYSTEM: Archive Persistence Confirmed.");
-        }
-
-        function loadArchive() {
-            const data = JSON.parse(localStorage.getItem('mindhq_archive'));
-            if(data) {
-                document.getElementById('arc-history').value = data.history || "";
-                document.getElementById('arc-traits').value = data.traits || "";
-                document.getElementById('arc-triggers').value = data.triggers || "";
-            }
-        }
-
-        // Audit Management
         function renderAudit() {
-            const container = document.getElementById('audit-list');
-            if (logs.length === 0) {
-                container.innerHTML = `<p style="text-align:center; padding:40px; color:var(--dim);">No neural data recorded.</p>`;
+            const list = document.getElementById('audit-list');
+            const emptyMsg = document.getElementById('empty-msg');
+            list.innerHTML = "";
+
+            if (auditData.length === 0) {
+                emptyMsg.style.display = "block";
                 return;
+            } else {
+                emptyMsg.style.display = "none";
             }
 
-            container.innerHTML = logs.map(log => {
-                let color = 'var(--entry)';
-                if(log.room.includes('Reception')) color = 'var(--reception)';
-                if(log.room.includes('Management')) color = 'var(--mgmt)';
-                if(log.room.includes('Workers') || log.room.includes('Heart')) color = 'var(--workers)';
-
-                return `
-                    <div class="audit-card" style="border-color: ${color}">
-                        <div class="audit-header">
-                            <span style="color: ${color}">${log.room}</span>
-                            <span>${log.timestamp}</span>
-                        </div>
-                        <div style="font-size: 14px; line-height: 1.5;">${log.content}</div>
+            auditData.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'audit-card';
+                card.innerHTML = `
+                    <div class="audit-border" style="background: ${item.color}"></div>
+                    <div class="audit-meta">
+                        <span>${item.timestamp}</span>
+                        <span style="color: ${item.color}">${item.node}</span>
                     </div>
+                    <div class="audit-data">${item.data}</div>
+                    <div class="audit-separator"></div>
                 `;
-            }).join('');
+                list.appendChild(card);
+            });
         }
 
-        function clearAudit() {
-            if(confirm("Purge all triage history? This cannot be undone.")) {
-                logs = [];
-                localStorage.setItem('mindhq_logs', JSON.stringify(logs));
-                renderAudit();
-            }
+        function formatTimestamp(date) {
+            const day = date.getDate();
+            const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+            const month = months[date.getMonth()];
+            const hours = date.getHours().toString().padStart(2, '0');
+            const mins = date.getMinutes().toString().padStart(2, '0');
+            return `${day} ${month} | ${hours}:${mins}`;
         }
-
-        // Init
-        window.onload = () => {
-            loadArchive();
-        };
     </script>
 </body>
 </html>
